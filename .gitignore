@@ -1,0 +1,15 @@
+# Virtual environment
+smartCityEnv/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+# IDE files
+.vscode/
+
+
+!requirements.txt
