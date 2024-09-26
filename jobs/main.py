@@ -1,4 +1,5 @@
 import os
+import time
 import uuid
 from confluent_kafka import SerializingProducer
 import simplejson as json
@@ -114,6 +115,26 @@ def generate_emergency_incident_data(deviceID,timestamp,location):
         'description':'Description of the incident'
     }
 
+def delivery_report(err, msg):
+    if err is not None:
+        print(f'Message delivery failed: {err}')
+    else:
+        print(f'Message delivered to {msg.topic()} [{msg.partition()}]')
+
+def json_serializer(obj):
+    if isinstance(obj, uuid.UUID):
+        return str(obj)
+    raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
+
+def produce_data_to_kafka(producer, topic, data):
+    producer.produce(
+        topic,
+        key=str(data['id']),
+        value=json.dumps(data,default=json_serializer).encode('utf-8'),
+        on_delivery=delivery_report
+    )
+    producer.flush()
+
 def simulate_vehicle_movement():
     '''
     Simulate the movement of the vehicle from IIT Jodhpur to Delhi
@@ -164,12 +185,16 @@ def simulate_journey(producer, deviceID):
         weather_data=generate_weather_data(deviceID,vehicleData['timestamp'],vehicleData['location'])
         emergency_incident_data=generate_emergency_incident_data(deviceID,vehicleData['timestamp'],vehicleData['location'])
         
-        print(f"Publishing Vehicle Data: {vehicleData}")
-        print(f"Publishing GPS Data: {gpsData}")
-        print(f"Publishing Traffic Camera Data: {traffic_camera_data}")
-        print(f"Publishing Weather Data: {weather_data}")
-        print(f"Publishing Emergency Incident Data: {emergency_incident_data}")
-        break
+        if vehicleData['location'][0]>=DELHI_COORDINATES['latitude'] and vehicleData['location'][1]<=DELHI_COORDINATES['longitude']:
+            print("Vehicle has reached Delhi. Simulation ending ...")
+            break
+        produce_data_to_kafka(producer,VEHICLE_TOPIC,vehicleData)
+        produce_data_to_kafka(producer,GPS_TOPIC,gpsData)
+        produce_data_to_kafka(producer,TRAFFIC_TOPIC,traffic_camera_data)
+        produce_data_to_kafka(producer,WEATHER_TOPIC,weather_data)
+        produce_data_to_kafka(producer,EMERGENCY_TOPIC,emergency_incident_data)
+        
+        time.sleep(5)
 
 
 if __name__ == "__main__":
