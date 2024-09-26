@@ -15,9 +15,11 @@ DELHI_COORDINATES = {
     "longitude": 77.088411
 }
 
+#Calculate the increment in latitude and longitude
 LATITUDE_INCREMENT = (DELHI_COORDINATES["latiude"] - IITJODHPUR_COORDINATES["latiude"]) / 100
 LONGITUDE_INCREMENT = (DELHI_COORDINATES["longitude"] - IITJODHPUR_COORDINATES["longitude"]) / 100
 
+#Environment Variables
 KAFKA_BOOTSTRAP_SERVERS = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 VEHICLE_TOPIC = os.environ.get("VEHIKLE_TOPIC", "vehicle_data")
 GPS_TOPIC = os.environ.get("GPS_TOPIC", "gps_data")
@@ -62,11 +64,30 @@ def simulate_vehicle_movement():
     
     
 
-def geenrate_vehicle_data(deviceID):
+def generate_vehicle_data(deviceID):
+    '''
+    Generate vehicle data for a given device ID
+    
+    Parameters
+    ----------
+    deviceID : str
+        The ID of the device
+    
+    Returns
+    -------
+    dict
+        The vehicle data containing the device ID and the current location
+    '''
     location = simulate_vehicle_movement()
 
 def simulate_journey(producer, deviceID):
     # When travelling
+    '''
+    Simulate the journey of a vehicle with the given device ID
+    
+    Publishes vehicle data to the VEHICLE_TOPIC topic every second
+    '''
+    
     while True:
         vehicleData = generate_vehicle_data(deviceID)
 
