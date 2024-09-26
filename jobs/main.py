@@ -185,7 +185,7 @@ def simulate_journey(producer, deviceID):
         weather_data=generate_weather_data(deviceID,vehicleData['timestamp'],vehicleData['location'])
         emergency_incident_data=generate_emergency_incident_data(deviceID,vehicleData['timestamp'],vehicleData['location'])
         
-        if vehicleData['location'][0]>=DELHI_COORDINATES['latitude'] and vehicleData['location'][1]<=DELHI_COORDINATES['longitude']:
+        if vehicleData['location'][0]>=DELHI_COORDINATES['latitude'] and vehicleData['location'][1]>=DELHI_COORDINATES['longitude']:
             print("Vehicle has reached Delhi. Simulation ending ...")
             break
         produce_data_to_kafka(producer,VEHICLE_TOPIC,vehicleData)
@@ -194,7 +194,7 @@ def simulate_journey(producer, deviceID):
         produce_data_to_kafka(producer,WEATHER_TOPIC,weather_data)
         produce_data_to_kafka(producer,EMERGENCY_TOPIC,emergency_incident_data)
         
-        time.sleep(5)
+        time.sleep(3)
 
 
 if __name__ == "__main__":
