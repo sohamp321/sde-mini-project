@@ -1,23 +1,27 @@
 import os
+import time
+import uuid
 from confluent_kafka import SerializingProducer
 import simplejson as json
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 
 
 IITJODHPUR_COORDINATES = {
-    "latiude": 26.472059, 
+    "latitude": 26.472059, 
     "longitude": 73.114016
 }
 
 DELHI_COORDINATES = {
-    "latiude": 28.551141,  
+    "latitude": 28.551141,  
     "longitude": 77.088411
 }
 
-LATITUDE_INCREMENT = (DELHI_COORDINATES["latiude"] - IITJODHPUR_COORDINATES["latiude"]) / 100
+#Calculate the increment in latitude and longitude
+LATITUDE_INCREMENT = (DELHI_COORDINATES["latitude"] - IITJODHPUR_COORDINATES["latitude"]) / 100
 LONGITUDE_INCREMENT = (DELHI_COORDINATES["longitude"] - IITJODHPUR_COORDINATES["longitude"]) / 100
 
+#Environment Variables
 KAFKA_BOOTSTRAP_SERVERS = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 VEHICLE_TOPIC = os.environ.get("VEHIKLE_TOPIC", "vehicle_data")
 GPS_TOPIC = os.environ.get("GPS_TOPIC", "gps_data")
@@ -25,9 +29,111 @@ TRAFFIC_TOPIC = os.environ.get("TRAFFIC_TOPIC", "traffic_data")
 WEATHER_TOPIC = os.environ.get("WEATHER_TOPIC", "weather_data")
 EMERGENCY_TOPIC = os.environ.get("EMERGENCY_TOPIC", "emergency_data")
 
-
+random.seed(42)
 startTime = datetime.now()
 startLocation = IITJODHPUR_COORDINATES.copy()
+
+def get_next_time():
+    global startTime
+    startTime+=timedelta(seconds=random.randint(30,60))
+    return startTime
+
+
+def generate_vehicle_data(deviceID):
+    '''
+    Generate vehicle data for a given device ID
+    
+    Parameters
+    ----------
+    deviceID : str
+        The ID of the device
+    
+    Returns
+    -------
+    dict
+        The vehicle data containing the device ID and the current location
+    '''
+    location = simulate_vehicle_movement()
+    return{
+        'id':uuid.uuid4(),
+        'deviceID': deviceID,
+        'timestamp': get_next_time().isoformat(),
+        'location': (location['latitude'], location['longitude']),
+        'speed':random.uniform(10,40),
+        'direction':'North-East',
+        'make':'BMW',
+        'model':'C500',
+        'year':2024,
+        'fuelType':'Hybrid'
+        
+        
+    }
+def generate_gps_data(deviceID,timestamp,vehicleType='private'):
+    return{
+        'id':uuid.uuid4(),
+        'deviceID': deviceID,
+        'timestamp': timestamp,
+        'speed':random.uniform(0,40),
+        'direction':'North-East',
+        'vehicleType':vehicleType
+    }
+    
+def generate_traffic_camera_data(deviceID,timestamp,location,cameraID):
+    return{
+        'id':uuid.uuid4(),
+        'deviceID': deviceID,
+        'cameraID': cameraID,
+        'location': location,
+        'timestamp': timestamp,
+        'snapshot':'Base64EncodedString'
+    }
+
+def generate_weather_data(deviceID,timestamp,location):
+    return{
+        'id':uuid.uuid4(),
+        'deviceID': deviceID,
+        'timestamp': timestamp,
+        'location': location,
+        'temperature':random.uniform(-5,34),
+        'weatherCondition':random.choice(['Sunny','Cloudy','Rainy','Storm']),
+        'precipitation':random.uniform(0,25),
+        'windSpeed':random.uniform(0,100),
+        'humidity':random.uniform(0,100),
+        'airQualityIndex':random.uniform(0,500)
+    
+    }
+
+def generate_emergency_incident_data(deviceID,timestamp,location):
+    return{
+        'id':uuid.uuid4(),
+        'deviceID': deviceID,
+        'incidentID': uuid.uuid4(),
+        'type': random.choice(['Fire','Accident','Earthquake','Flood','Medical','Police','None']),
+        'timestamp': timestamp,
+        'location': location,
+        'status':random.choice(['Active', 'Resolved']),
+        'description':'Description of the incident'
+    }
+
+def delivery_report(err, msg):
+    if err is not None:
+        print(f'Message delivery failed: {err}')
+    else:
+        print(f'Message delivered to {msg.topic()} [{msg.partition()}]')
+
+def json_serializer(obj):
+    if isinstance(obj, uuid.UUID):
+        return str(obj)
+    raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
+
+def produce_data_to_kafka(producer, topic, data):
+    producer.produce(
+        topic,
+        key=str(data['id']),
+        value=json.dumps(data,default=json_serializer).encode('utf-8'),
+        on_delivery=delivery_report
+    )
+    producer.flush()
 
 def simulate_vehicle_movement():
     '''
@@ -62,13 +168,33 @@ def simulate_vehicle_movement():
     
     
 
-def geenrate_vehicle_data(deviceID):
-    location = simulate_vehicle_movement()
+
 
 def simulate_journey(producer, deviceID):
     # When travelling
+    '''
+    Simulate the journey of a vehicle with the given device ID
+    
+    Publishes vehicle data to the VEHICLE_TOPIC topic every second
+    '''
+    
     while True:
         vehicleData = generate_vehicle_data(deviceID)
+        gpsData=generate_gps_data(deviceID,vehicleData['timestamp'])
+        traffic_camera_data=generate_traffic_camera_data(deviceID,vehicleData['timestamp'],vehicleData['location'],'Nikon-Cam123')
+        weather_data=generate_weather_data(deviceID,vehicleData['timestamp'],vehicleData['location'])
+        emergency_incident_data=generate_emergency_incident_data(deviceID,vehicleData['timestamp'],vehicleData['location'])
+        
+        if vehicleData['location'][0]>=DELHI_COORDINATES['latitude'] and vehicleData['location'][1]>=DELHI_COORDINATES['longitude']:
+            print("Vehicle has reached Delhi. Simulation ending ...")
+            break
+        produce_data_to_kafka(producer,VEHICLE_TOPIC,vehicleData)
+        produce_data_to_kafka(producer,GPS_TOPIC,gpsData)
+        produce_data_to_kafka(producer,TRAFFIC_TOPIC,traffic_camera_data)
+        produce_data_to_kafka(producer,WEATHER_TOPIC,weather_data)
+        produce_data_to_kafka(producer,EMERGENCY_TOPIC,emergency_incident_data)
+        
+        time.sleep(3)
 
 
 if __name__ == "__main__":
