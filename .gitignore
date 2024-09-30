@@ -1,6 +1,6 @@
 # Virtual environment
 smartCityEnv/
-
+mysql-connector-java-8.0.25/
 # Python bytecode
 __pycache__/
 *.pyc
