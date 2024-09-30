@@ -64,7 +64,10 @@ docker exec -it sde-mini-project-spark-master-1 spark-submit \
 
 2. For non-cloud
 ```bash
-docker exec --env-file .env -it sde-mini-project-spark-master-1 spark-submit --master spark://spark-master:7077  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.apache.hadoop:hadoop-aws:3.3.1,com.amazonaws:aws-java-sdk:1.11.469,mysql:mysql-connector-java:8.0.25  jobs/minio-to-mysql.py
+docker exec --env-file .env -it sde-mini-project-spark-master-1 spark-submit \
+  --master spark://spark-master:7077  \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.apache.hadoop:hadoop-aws:3.3.1,com.amazonaws:aws-java-sdk:1.11.469,mysql:mysql-connector-java:8.0.25  \
+  jobs/minio-to-mysql.py
 ```
 ### 5. AWS Configuration
 
