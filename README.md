@@ -54,6 +54,7 @@ docker-compose up --build
 
 Once the Docker containers are up and running, you can submit the Apache Spark job that processes data streams from Kafka by executing the following command:
 
+1. For Cloud
 ```bash
 docker exec -it sde-mini-project-spark-master-1 spark-submit \
   --master spark://spark-master:7077 \
@@ -61,6 +62,10 @@ docker exec -it sde-mini-project-spark-master-1 spark-submit \
   jobs/spark-city.py
 ```
 
+2. For non-cloud
+```bash
+docker exec --env-file .env -it sde-mini-project-spark-master-1 spark-submit --master spark://spark-master:7077  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.apache.hadoop:hadoop-aws:3.3.1,com.amazonaws:aws-java-sdk:1.11.469,mysql:mysql-connector-java:8.0.25  jobs/minio-to-mysql.py
+```
 ### 5. AWS Configuration
 
 Ensure that the following AWS services are properly configured:
