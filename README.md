@@ -17,13 +17,12 @@ This project simulates IoT data streams for smart city applications, including v
 ```bash
 .
 ├── jobs/
-│   ├── config.py            # Configuration settings
-│   ├── main.py              # Entry point for generating and streaming IoT data
-│   └── spark-city.py        # Spark job for processing the streamed data
-├── .gitignore                # Git ignore file
-├── README.md                 # Project documentation
-├── docker-compose.yml        # Docker setup for Kafka, Spark, and other services
-└── requirements.txt          # Python dependencies
+│   ├── config.py                     # Configuration settings
+│   ├── main.py                       # Entry point for generating and streaming IoT data
+│   ├── mini-spark-city.py            # Mini Spark job for processing a subset of the streamed data
+│   ├── minio-to-mysql.py             # Script for transferring data from MinIO to MySQL
+│   ├── mysql-connector-java-8.0.25.jar # MySQL connector JAR for Java applications
+│   └── spark-city.py                 # Main Spark job for processing the streamed data
 ```
 
 ## Setup Instructions
